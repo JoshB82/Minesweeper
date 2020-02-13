@@ -90,7 +90,7 @@ namespace Minesweeper__Better_version_
             Start();
         }
 
-        public void Start()
+        private void Start()
         {
             using (New_Game new_game = new New_Game())
             {
