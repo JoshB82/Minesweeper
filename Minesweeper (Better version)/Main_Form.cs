@@ -22,9 +22,9 @@ namespace Minesweeper__Better_version_
         private const int board_offset_horizontal = 10;
         private const int board_offset_vertical = 10;
 
-        private const int beginner_num_mines = 8;
-        private const int intermediate_num_mines = 15;
-        private const int expert_num_mines = 45;
+        private const int beginner_num_mines = 10;
+        private const int intermediate_num_mines = 75;
+        private const int expert_num_mines = 250;
 
         // Current settings
         private int number_squares_horizontal;
@@ -134,7 +134,6 @@ namespace Minesweeper__Better_version_
 
         private void DrawGrid(int num_tiles_horizontal, int num_tiles_vertical)
         {
-
             this.canvas_width = board_offset_horizontal*2 + square_width * num_tiles_horizontal;
             this.canvas_height = board_offset_vertical*2 + square_height * num_tiles_vertical;
 
@@ -170,7 +169,7 @@ namespace Minesweeper__Better_version_
             Random rnd = new Random();
             int horizontal_rnd, vertical_rnd;
 
-            for (int i = 0; i < num_mines; i++)
+            for (int i = 1; i <= num_mines; i++)
             {
                 do
                 {
@@ -243,7 +242,7 @@ namespace Minesweeper__Better_version_
                 }
 
                 // Right side
-                if (horizontal_rnd == num_tiles_vertical - 1)
+                if (horizontal_rnd == num_tiles_horizontal - 1)
                 {
                     IncrementSquare(horizontal_rnd, vertical_rnd, 0, 1);
                     IncrementSquare(horizontal_rnd, vertical_rnd, -1, 1);
@@ -337,6 +336,16 @@ namespace Minesweeper__Better_version_
                             square_states[square_x, square_y] = 1;
                             DrawSquare(square_x, square_y);
                             num_squares_left--;
+                            if (square_values[square_x,square_y] == 0) {
+                                Bitmap temp = new Bitmap(canvas_width, canvas_height);
+                                using (Graphics g = Graphics.FromImage(temp))
+                                {
+                                    g.DrawImage(canvas, Point.Empty);
+                                    showAdjacentSquares(square_x, square_y, g);
+                                }
+                                canvas = temp;
+                                Canvas_Panel.Invalidate();
+                            }
                         }
                         break;
                     case MouseButtons.Right:
@@ -356,6 +365,118 @@ namespace Minesweeper__Better_version_
 
                 if (square_states[square_x, square_y] == 1 && square_values[square_x, square_y] == 9) Game_Loss();
                 if (num_squares_left == num_mines) Game_Win();
+            }
+        }
+
+        private void showAdjacentSquares(int x, int y, Graphics g)
+        {
+            // Corner squares
+
+            // Bottom left
+            if (x == 0 && y == 0)
+            {
+                Check_Square(0, 0, 0, 1, g);
+                Check_Square(0, 0, 1, 0, g);
+                Check_Square(0, 0, 1, 1, g);
+                return;
+            }
+
+            // Bottom right
+            if (x == number_squares_horizontal - 1 && y == 0)
+            {
+                Check_Square(number_squares_horizontal - 1, 0, -1, 0, g);
+                Check_Square(number_squares_horizontal - 1, 0, -1, 1, g);
+                Check_Square(number_squares_horizontal - 1, 0, 0, 1, g);
+                return;
+            }
+
+            // Top left
+            if (x == 0 && y == number_squares_vertical - 1)
+            {
+                Check_Square(0, number_squares_vertical - 1, 0, -1, g);
+                Check_Square(0, number_squares_vertical - 1, 1, -1, g);
+                Check_Square(0, number_squares_vertical - 1, 1, 0, g);
+                return;
+            }
+
+            // Top right
+            if (x == number_squares_horizontal - 1 && y == number_squares_vertical - 1)
+            {
+                Check_Square(number_squares_horizontal - 1, number_squares_vertical - 1, -1, 0, g);
+                Check_Square(number_squares_horizontal - 1, number_squares_vertical - 1, -1, -1, g);
+                Check_Square(number_squares_horizontal - 1, number_squares_vertical - 1, 0, -1, g);
+                return;
+            }
+
+            // Side squares
+
+            // Left side
+            if (x == 0)
+            {
+                Check_Square(x, y, 0, -1, g);
+                Check_Square(x, y, 1, -1, g);
+                Check_Square(x, y, 1, 0, g);
+                Check_Square(x, y, 1, 1, g);
+                Check_Square(x, y, 0, 1, g);
+                return;
+            }
+
+            // Bottom side
+            if (y == 0)
+            {
+                Check_Square(x, y, -1, 0, g);
+                Check_Square(x, y, -1, 1, g);
+                Check_Square(x, y, 0, 1, g);
+                Check_Square(x, y, 1, 1, g);
+                Check_Square(x, y, 1, 0, g);
+                return;
+            }
+
+            // Right side
+            if (x == number_squares_horizontal - 1)
+            {
+                Check_Square(x, y, 0, 1, g);
+                Check_Square(x, y, -1, 1, g);
+                Check_Square(x, y, -1, 0, g);
+                Check_Square(x, y, -1, -1, g);
+                Check_Square(x, y, 0, -1, g);
+                return;
+            }
+
+            // Top side
+            if (y == number_squares_vertical - 1)
+            {
+                Check_Square(x, y, -1, 0, g);
+                Check_Square(x, y, -1, -1, g);
+                Check_Square(x, y, 0, -1, g);
+                Check_Square(x, y, 1, -1, g);
+                Check_Square(x, y, 1, 0, g);
+                return;
+            }
+
+            // Regular square
+            for (int i = -1; i <= 1; i++)
+            {
+                Check_Square(x, y, -1, i, g);
+                Check_Square(x, y, 1, i, g);
+            }
+            Check_Square(x, y, 0, - 1, g);
+            Check_Square(x, y, 0, + 1, g);
+        }
+
+        private void Check_Square(int x, int y, int offset_x, int offset_y, Graphics g)
+        {
+            if (square_states[x + offset_x, y + offset_y] == 0)
+            {
+                square_states[x + offset_x, y + offset_y] = 1;
+                g.DrawImage(
+                    Properties.Resources.minesweeper_tiles,
+                    new Rectangle((x + offset_x) * square_width + board_offset_horizontal, (y + offset_y) * square_height + board_offset_vertical, square_width, square_height),
+                    number_images[square_values[x + offset_x, y + offset_y]],
+                    GraphicsUnit.Pixel
+                );
+                num_squares_left--;
+                if (square_values[x + offset_x, y + offset_y] == 0) showAdjacentSquares(x + offset_x, y + offset_y, g);
             }
         }
 
