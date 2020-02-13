@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -16,8 +14,8 @@ namespace Minesweeper__Better_version_
         private const int expert_num_squares_horizontal = 50;
         private const int expert_num_squares_vertical = 40;
 
-        private const int square_width = 16;
-        private const int square_height = 16;
+        private const int square_width = 20;
+        private const int square_height = 20;
 
         private const int board_offset_horizontal = 10;
         private const int board_offset_vertical = 10;
@@ -30,9 +28,8 @@ namespace Minesweeper__Better_version_
         private int number_squares_horizontal;
         private int number_squares_vertical;
         private int num_mines;
+        private int num_mines_left;
         private int num_squares_left;
-
-        private string board_difficulty;
 
         private int canvas_width, canvas_height;
 
@@ -79,7 +76,8 @@ namespace Minesweeper__Better_version_
 
         private void aboutToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Minesweeper - Programmed by Josh Bryant.","About");
+            MessageBox.Show("Minesweeper - Programmed by Josh Bryant.","About",
+                MessageBoxButtons.OK,MessageBoxIcon.Information);
         }
 
         private void Canvas_Panel_Paint(object sender, PaintEventArgs e)
@@ -97,16 +95,15 @@ namespace Minesweeper__Better_version_
             using (New_Game new_game = new New_Game())
             {
                 new_game.ShowDialog();
-                if (new_game.beginner_button.Checked) NewGame("Beginner");
-                if (new_game.intermediate_button.Checked) NewGame("Intermediate");
-                if (new_game.expert_button.Checked) NewGame("Expert");
+                if (new_game.beginner_button.Checked) NewGame("Beginner", new_game);
+                if (new_game.intermediate_button.Checked) NewGame("Intermediate", new_game);
+                if (new_game.expert_button.Checked) NewGame("Expert", new_game);
+                if (new_game.custom_button.Checked) NewGame("Custom", new_game);
             }
         }
 
-        public void NewGame(string difficulty)
+        public void NewGame(string difficulty, New_Game new_game)
         {
-            board_difficulty = difficulty;
-            
             switch (difficulty)
             {
                 case "Beginner":
@@ -124,12 +121,19 @@ namespace Minesweeper__Better_version_
                     number_squares_vertical = expert_num_squares_vertical;
                     num_mines = expert_num_mines;
                     break;
+                case "Custom":
+                    number_squares_horizontal = (int)new_game.board_width_selection.Value;
+                    number_squares_vertical = (int)new_game.board_height_selection.Value;
+                    num_mines = (int)new_game.num_mines_selection.Value;
+                    break;
             }
             
             PopulateSquares(number_squares_horizontal, number_squares_vertical);
             DrawGrid(number_squares_horizontal, number_squares_vertical);
 
+            num_mines_left = num_mines;
             num_squares_left = number_squares_horizontal * number_squares_vertical;
+            Update_Status_Bar();
         }
 
         private void DrawGrid(int num_tiles_horizontal, int num_tiles_vertical)
@@ -137,7 +141,7 @@ namespace Minesweeper__Better_version_
             this.canvas_width = board_offset_horizontal*2 + square_width * num_tiles_horizontal;
             this.canvas_height = board_offset_vertical*2 + square_height * num_tiles_vertical;
 
-            this.ClientSize = new Size(canvas_width, canvas_height+menuStrip1.Height);
+            this.ClientSize = new Size(canvas_width, canvas_height + menuStrip1.Height + statusStrip1.Height);
 
             Bitmap temp = new Bitmap(canvas_width,canvas_height);
 
@@ -336,6 +340,7 @@ namespace Minesweeper__Better_version_
                             square_states[square_x, square_y] = 1;
                             DrawSquare(square_x, square_y);
                             num_squares_left--;
+                            Update_Status_Bar();
                             if (square_values[square_x,square_y] == 0) {
                                 Bitmap temp = new Bitmap(canvas_width, canvas_height);
                                 using (Graphics g = Graphics.FromImage(temp))
@@ -354,10 +359,14 @@ namespace Minesweeper__Better_version_
                             case 0:
                                 square_states[square_x, square_y] = 2;
                                 DrawSquare(square_x, square_y);
+                                num_mines_left--;
+                                Update_Status_Bar();
                                 break;
                             case 2:
                                 square_states[square_x, square_y] = 0;
                                 DrawSquare(square_x, square_y);
+                                num_mines_left++;
+                                Update_Status_Bar();
                                 break;
                         }
                         break;
@@ -476,13 +485,21 @@ namespace Minesweeper__Better_version_
                     GraphicsUnit.Pixel
                 );
                 num_squares_left--;
+                Update_Status_Bar();
                 if (square_values[x + offset_x, y + offset_y] == 0) showAdjacentSquares(x + offset_x, y + offset_y, g);
             }
         }
 
+        private void Update_Status_Bar()
+        {
+            toolStripStatusLabel1.Text = "No. of mines/squares left: " +
+                ((num_mines_left < 0) ? 0 : num_mines_left).ToString() + 
+                "/" + num_squares_left.ToString();
+        }
+
         private void Game_Win()
         {
-            MessageBox.Show("You found all the mines! Congratulations!", "Game over!");
+            MessageBox.Show("You found all the mines and cleared the board! Congratulations!", "Game over!");
             Start();
         }
 
@@ -516,6 +533,20 @@ namespace Minesweeper__Better_version_
 
             canvas = temp;
             Canvas_Panel.Invalidate();
+        }
+
+        private void newGameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Start();
+        }
+
+        private void helpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string help = "The objective of minesweeper is to locate all the mines on the grid by clicking " +
+                "to reveal the number clues. Each number indicates how many mines are adjacent to that square, " +
+                "including diagonals. Right click on an unrevealed square to mark it with a flag that indicates " +
+                "that a mine is present in that square. Right click the square again to remove the flag.";
+            MessageBox.Show(help,"Help",MessageBoxButtons.OK,MessageBoxIcon.Information);
         }
     }
 }
