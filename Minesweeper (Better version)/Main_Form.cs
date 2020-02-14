@@ -18,7 +18,7 @@ namespace Minesweeper__Better_version_
         private const int square_height = 20;
 
         private const int board_offset_horizontal = 10;
-        private const int board_offset_vertical = 10;
+        private int board_offset_vertical = 10;
 
         private const int beginner_num_mines = 10;
         private const int intermediate_num_mines = 75;
@@ -30,6 +30,7 @@ namespace Minesweeper__Better_version_
         private int num_mines;
         private int num_mines_left;
         private int num_squares_left;
+        private int time_elapsed;
 
         private int canvas_width, canvas_height;
 
@@ -134,14 +135,18 @@ namespace Minesweeper__Better_version_
             num_mines_left = num_mines;
             num_squares_left = number_squares_horizontal * number_squares_vertical;
             Update_Status_Bar();
+
+            time_elapsed = 0;
+            timer_label.Text = "Time elapsed: " + time_elapsed + " seconds";
+            timer1.Start();
         }
 
         private void DrawGrid(int num_tiles_horizontal, int num_tiles_vertical)
         {
-            this.canvas_width = board_offset_horizontal*2 + square_width * num_tiles_horizontal;
-            this.canvas_height = board_offset_vertical*2 + square_height * num_tiles_vertical;
+            this.canvas_width = board_offset_horizontal * 2 + square_width * num_tiles_horizontal;
+            this.canvas_height = board_offset_vertical * 2 + square_height * num_tiles_vertical;
 
-            this.ClientSize = new Size(canvas_width, canvas_height + menuStrip1.Height + statusStrip1.Height);
+            this.ClientSize = new Size(canvas_width, canvas_height + menuStrip1.Height + toolStrip1.Height + statusStrip1.Height);
 
             Bitmap temp = new Bitmap(canvas_width,canvas_height);
 
@@ -153,7 +158,7 @@ namespace Minesweeper__Better_version_
                     {
                         g.DrawImage(
                             Properties.Resources.minesweeper_tiles,
-                            new Rectangle(i*square_width+board_offset_horizontal,j*square_height+board_offset_vertical,square_width,square_height),
+                            new Rectangle(i * square_width+board_offset_horizontal, j * square_height + board_offset_vertical, square_width, square_height),
                             new Rectangle(0, 0, 128, 128),
                             GraphicsUnit.Pixel
                         );
@@ -493,20 +498,24 @@ namespace Minesweeper__Better_version_
         private void Update_Status_Bar()
         {
             toolStripStatusLabel1.Text = "No. of mines/squares left: " +
-                ((num_mines_left < 0) ? 0 : num_mines_left).ToString() + 
-                "/" + num_squares_left.ToString();
+                ((num_mines_left < 0) ? 0 : num_mines_left) + 
+                "/" + num_squares_left;
         }
 
         private void Game_Win()
         {
-            MessageBox.Show("You found all the mines and cleared the board! Congratulations!", "Game over!");
+            timer1.Stop();
+            MessageBox.Show("You found all the mines and cleared the board! Congratulations!\n" +
+                "You completed the board in " + time_elapsed + " seconds.", "Game over!");
             Start();
         }
 
         private void Game_Loss()
         {
+            timer1.Stop();
             DrawEntireBoard();
-            MessageBox.Show("You clicked on a mine!", "Game over!");
+            MessageBox.Show("You clicked on a mine! Game over!\n" +
+                "You played for " + time_elapsed + " seconds.", "Game over!");
             Start();
         }
 
@@ -538,6 +547,12 @@ namespace Minesweeper__Better_version_
         private void newGameToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Start();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            time_elapsed += 1;
+            timer_label.Text = "Time elapsed: " + time_elapsed + " seconds";
         }
 
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
